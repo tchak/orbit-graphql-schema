@@ -1,2 +1,15 @@
-# orbit-graphql-schema
-GraphQL schema builder for Orbit
+# orbit-graphql-schema [![Build Status](https://travis-ci.com/tchak/orbit-graphql-schema.svg?branch=master)](https://travis-ci.com/tchak/orbit-graphql-schema)
+
+GraphQL schema builder for Orbit.
+
+## Installation
+
+Install with yarn:
+
+```
+yarn add orbit-graphql-schema
+```
+
+## License
+
+MIT License (see LICENSE for details).
