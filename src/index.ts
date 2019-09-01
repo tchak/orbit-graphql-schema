@@ -37,7 +37,7 @@ export interface Source extends OrbitSource, Queryable {}
 
 export interface Context {
   source: Source;
-  headers?: Record<string, string>;
+  options?: Record<string, unknown>;
 }
 
 interface Params {}
@@ -74,11 +74,12 @@ export function makeExecutableSchema(schema: Schema): GraphQLSchema {
             type: new GraphQLNonNull(GraphQLID)
           }
         },
-        resolve(_, params: FindRecordParams, { source, headers }) {
+        resolve(_, params: FindRecordParams, { source, options }) {
           return source.query(
             q => q.findRecord({ type, id: params.id as string }),
             {
-              [source.name]: { headers: headers }
+              from: 'graphql',
+              [source.name]: options
             }
           );
         }
@@ -94,7 +95,7 @@ export function makeExecutableSchema(schema: Schema): GraphQLSchema {
             type: makeWhereInputType(schema, type, inputs)
           }
         },
-        resolve(_, params: FindRecordsParams, { source, headers }) {
+        resolve(_, params: FindRecordsParams, { source, options }) {
           return source.query(
             q =>
               buildFindRecordsQuery(
@@ -105,7 +106,8 @@ export function makeExecutableSchema(schema: Schema): GraphQLSchema {
                 params.orderBy
               ),
             {
-              [source.name]: { headers }
+              from: 'graphql',
+              [source.name]: options
             }
           );
         }
@@ -168,7 +170,7 @@ function makeModelType(
             }
           },
           resolve: (parent, _, context) => {
-            const { source, headers } = context;
+            const { source, options } = context;
             return getDataLoader(
               context,
               namespace,
@@ -176,7 +178,8 @@ function makeModelType(
                 return Promise.all(
                   records.map(record =>
                     source.query(q => q.findRelatedRecords(record, property), {
-                      [source.name]: { headers }
+                      from: 'graphql',
+                      [source.name]: options
                     })
                   )
                 );
@@ -188,7 +191,7 @@ function makeModelType(
         fields[property] = {
           type: types[type],
           resolve: (parent, _, context) => {
-            const { source, headers } = context;
+            const { source, options } = context;
             return getDataLoader(
               context,
               namespace,
@@ -196,7 +199,8 @@ function makeModelType(
                 return Promise.all(
                   records.map(record =>
                     source.query(q => q.findRelatedRecord(record, property), {
-                      [source.name]: { headers }
+                      from: 'graphql',
+                      [source.name]: options
                     })
                   )
                 );
