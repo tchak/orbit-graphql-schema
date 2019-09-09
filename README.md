@@ -1,4 +1,4 @@
-# orbit-graphql-schema [![Build Status](https://travis-ci.com/tchak/orbit-graphql-schema.svg?branch=master)](https://travis-ci.com/tchak/orbit-graphql-schema)
+# orbit-graphql-schema ![Build Status](https://github.com/tchak/orbit-graphql-schema/workflows/CI/badge.svg)
 
 GraphQL schema builder for Orbit.
 
