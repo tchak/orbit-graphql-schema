@@ -14,10 +14,10 @@
   "repository": "https://github.com/tchak/orbit-graphql-schema",
   "license": "MIT",
   "dependencies": {
-    "@orbit/data": "^0.16.3",
+    "@orbit/data": "^0.16.4",
     "@orbit/utils": "^0.16.3",
     "dataloader": "^2.0.0",
-    "graphql": "^14.5.8",
+    "graphql": "^14.6.0",
     "graphql-iso-date": "^3.6.1"
   },
   "scripts": {
@@ -29,18 +29,18 @@
   },
   "devDependencies": {
     "@types/graphql-iso-date": "^3.3.3",
-    "@types/node": "^12.12.12",
+    "@types/node": "^13.7.7",
     "@types/qunit": "^2.9.0",
-    "@typescript-eslint/eslint-plugin": "^2.8.0",
-    "@typescript-eslint/parser": "^2.8.0",
-    "eslint": "^6.7.0",
-    "eslint-config-prettier": "^6.7.0",
-    "eslint-plugin-prettier": "^3.1.1",
+    "@typescript-eslint/eslint-plugin": "^2.22.0",
+    "@typescript-eslint/parser": "^2.22.0",
+    "eslint": "^6.8.0",
+    "eslint-config-prettier": "^6.10.0",
+    "eslint-plugin-prettier": "^3.1.2",
     "prettier": "^1.19.1",
     "qunit": "^2.9.3",
-    "release-it": "^12.4.3",
-    "ts-node": "^8.5.2",
-    "typescript": "^3.7.2"
+    "release-it": "^12.6.3",
+    "ts-node": "^8.6.2",
+    "typescript": "^3.8.3"
   },
   "publishConfig": {
     "access": "public",
