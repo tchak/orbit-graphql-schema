@@ -8,7 +8,8 @@ import {
   AttributeDefinition,
   FilterQBParam,
   SortQBParam,
-  QueryBuilder
+  QueryBuilder,
+  FindRecordsTerm,
 } from '@orbit/data';
 import { deepGet, camelize, capitalize } from '@orbit/utils';
 
@@ -22,13 +23,13 @@ import {
   GraphQLEnumType,
   GraphQLEnumValueConfigMap,
   GraphQLInputObjectType,
-  GraphQLInputFieldConfigMap
+  GraphQLInputFieldConfigMap,
 } from 'graphql/type/definition';
 import {
   GraphQLString,
   GraphQLID,
   GraphQLInt,
-  GraphQLBoolean
+  GraphQLBoolean,
 } from 'graphql/type/scalars';
 import { GraphQLDate, GraphQLDateTime } from 'graphql-iso-date';
 import DataLoader from 'dataloader';
@@ -71,33 +72,33 @@ export function makeExecutableSchema(schema: Schema): GraphQLSchema {
         type: types[type],
         args: {
           id: {
-            type: new GraphQLNonNull(GraphQLID)
-          }
+            type: new GraphQLNonNull(GraphQLID),
+          },
         },
         resolve(_, params: FindRecordParams, { source, options }) {
           return source.query(
-            q => q.findRecord({ type, id: params.id as string }),
+            (q) => q.findRecord({ type, id: params.id as string }),
             {
               from: 'graphql',
-              [source.name]: options
+              [source.name]: options,
             }
           );
-        }
+        },
       };
 
       fields[schema.pluralize(type)] = {
         type: new GraphQLNonNull(new GraphQLList(types[type])),
         args: {
           orderBy: {
-            type: makeOrderByInputType(schema, type, enums)
+            type: makeOrderByInputType(schema, type, enums),
           },
           where: {
-            type: makeWhereInputType(schema, type, inputs)
-          }
+            type: makeWhereInputType(schema, type, inputs),
+          },
         },
         resolve(_, params: FindRecordsParams, { source, options }) {
           return source.query(
-            q =>
+            (q) =>
               buildFindRecordsQuery(
                 schema,
                 type,
@@ -107,10 +108,10 @@ export function makeExecutableSchema(schema: Schema): GraphQLSchema {
               ),
             {
               from: 'graphql',
-              [source.name]: options
+              [source.name]: options,
             }
           );
-        }
+        },
       };
     }
 
@@ -119,7 +120,7 @@ export function makeExecutableSchema(schema: Schema): GraphQLSchema {
 
   const Query = new GraphQLObjectType({
     name: 'Query',
-    fields
+    fields,
   });
 
   return new GraphQLSchema({ query: Query });
@@ -138,13 +139,13 @@ function makeModelType(
       string,
       GraphQLFieldConfig<RecordIdentity, Context>
     > = {
-      id: { type: new GraphQLNonNull(GraphQLID) }
+      id: { type: new GraphQLNonNull(GraphQLID) },
     };
 
     schema.eachAttribute(type, (property, attribute) => {
       fields[property] = {
         type: getAttributeGraphQLType(attribute),
-        resolve: parent => deepGet(parent, ['attributes', property])
+        resolve: (parent) => deepGet(parent, ['attributes', property]),
       };
     });
 
@@ -163,50 +164,46 @@ function makeModelType(
           type: new GraphQLNonNull(new GraphQLList(types[type])),
           args: {
             orderBy: {
-              type: makeOrderByInputType(schema, type, enums)
+              type: makeOrderByInputType(schema, type, enums),
             },
             where: {
-              type: makeWhereInputType(schema, type, inputs)
-            }
+              type: makeWhereInputType(schema, type, inputs),
+            },
           },
           resolve: (parent, _, context) => {
             const { source, options } = context;
-            return getDataLoader(
-              context,
-              namespace,
-              (records: OrbitRecord[]) => {
-                return Promise.all(
-                  records.map(record =>
-                    source.query(q => q.findRelatedRecords(record, property), {
-                      from: 'graphql',
-                      [source.name]: options
-                    })
-                  )
-                );
-              }
+            return getDataLoader(context, namespace, (records: OrbitRecord[]) =>
+              source.query(
+                (q) =>
+                  records.map((record) =>
+                    q.findRelatedRecords(record, property)
+                  ),
+                {
+                  from: 'graphql',
+                  [source.name]: options,
+                }
+              )
             ).load(parent);
-          }
+          },
         };
       } else {
         fields[property] = {
           type: types[type],
           resolve: (parent, _, context) => {
             const { source, options } = context;
-            return getDataLoader(
-              context,
-              namespace,
-              (records: OrbitRecord[]) => {
-                return Promise.all(
-                  records.map(record =>
-                    source.query(q => q.findRelatedRecord(record, property), {
-                      from: 'graphql',
-                      [source.name]: options
-                    })
-                  )
-                );
-              }
+            return getDataLoader(context, namespace, (records: OrbitRecord[]) =>
+              source.query(
+                (q) =>
+                  records.map((record) =>
+                    q.findRelatedRecord(record, property)
+                  ),
+                {
+                  from: 'graphql',
+                  [source.name]: options,
+                }
+              )
             ).load(parent);
-          }
+          },
         };
       }
     });
@@ -216,7 +213,7 @@ function makeModelType(
 
   const ModelType = new GraphQLObjectType({
     name: typeClassName,
-    fields
+    fields,
   });
 
   types[type] = ModelType;
@@ -228,27 +225,27 @@ function makeOrderByInputType(
   schema: Schema,
   type: string,
   enums: Record<string, GraphQLEnumType>
-) {
+): GraphQLEnumType {
   const typeClassName = `${classify(type)}OrderByInput`;
   let OrderByInput = enums[typeClassName];
 
   if (!OrderByInput) {
     const orderByInputFields: GraphQLEnumValueConfigMap = {
       ['id_ASC']: { value: { attribute: 'id', order: 'ascending' } },
-      ['id_DESC']: { value: { attribute: 'id', order: 'descending' } }
+      ['id_DESC']: { value: { attribute: 'id', order: 'descending' } },
     };
-    schema.eachAttribute(type, property => {
+    schema.eachAttribute(type, (property) => {
       orderByInputFields[`${property}_ASC`] = {
-        value: { attribute: property, order: 'ascending' }
+        value: { attribute: property, order: 'ascending' },
       };
       orderByInputFields[`${property}_DESC`] = {
-        value: { attribute: property, order: 'descending' }
+        value: { attribute: property, order: 'descending' },
       };
     });
 
     OrderByInput = new GraphQLEnumType({
       name: typeClassName,
-      values: orderByInputFields
+      values: orderByInputFields,
     });
 
     enums[typeClassName] = OrderByInput;
@@ -261,34 +258,34 @@ function makeWhereInputType(
   schema: Schema,
   type: string,
   inputs: Record<string, GraphQLInputObjectType>
-) {
+): GraphQLInputObjectType {
   const typeClassName = `${classify(type)}WhereInput`;
   let WhereInput = inputs[typeClassName];
 
   if (!WhereInput) {
     const whereInputFields: GraphQLInputFieldConfigMap = {
       id: { type: GraphQLID },
-      ['id_in']: { type: new GraphQLList(GraphQLID) }
+      ['id_in']: { type: new GraphQLList(GraphQLID) },
     };
     schema.eachAttribute(type, (property, attribute) => {
       const GraphQLType = getAttributeGraphQLType(attribute);
       whereInputFields[property] = {
-        type: GraphQLType
+        type: GraphQLType,
       };
       whereInputFields[`${property}_not`] = {
-        type: GraphQLType
+        type: GraphQLType,
       };
       whereInputFields[`${property}_in`] = {
-        type: new GraphQLList(GraphQLType)
+        type: new GraphQLList(GraphQLType),
       };
       whereInputFields[`${property}_not_in`] = {
-        type: new GraphQLList(GraphQLType)
+        type: new GraphQLList(GraphQLType),
       };
     });
 
     WhereInput = new GraphQLInputObjectType({
       name: typeClassName,
-      fields: whereInputFields
+      fields: whereInputFields,
     });
 
     inputs[typeClassName] = WhereInput;
@@ -329,14 +326,16 @@ function getDataLoader(
   let dataLoader = dataLoaderMap.get(namespace);
   if (!dataLoader) {
     dataLoader = new DataLoader(batchLoadFn, {
-      cacheKeyFn: serializeRecordIdentity
+      cacheKeyFn: serializeRecordIdentity,
     });
     dataLoaderMap.set(namespace, dataLoader);
   }
   return dataLoader;
 }
 
-function dataLoaderMapFor(context: object) {
+function dataLoaderMapFor(
+  context: object
+): Map<unknown, DataLoader<RecordIdentity, QueryResult>> {
   let dataLoaderMap = dataLoaderMapForContext.get(context);
   if (!dataLoaderMap) {
     dataLoaderMap = new Map();
@@ -353,12 +352,12 @@ function buildFindRecordsQuery(
   q: QueryBuilder,
   where?: Record<string, any>,
   orderBy?: SortQBParam
-) {
-  let term;
+): FindRecordsTerm {
+  let term: FindRecordsTerm;
   const { id_in: idIn = undefined, id = undefined, ...whereOnAttributes } =
     where || {};
   if (idIn) {
-    term = q.findRecords((idIn as string[]).map(id => ({ type, id })));
+    term = q.findRecords((idIn as string[]).map((id) => ({ type, id })));
   } else if (id) {
     term = q.findRecords([{ type, id }]);
   } else {
@@ -384,7 +383,7 @@ function filterQBParams(
       params.push({
         op: 'equal',
         attribute,
-        value: where[attribute]
+        value: where[attribute],
       });
     }
   }
